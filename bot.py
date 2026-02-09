@@ -114,28 +114,24 @@ async def anti_ads(message: types.Message):
                 await message.answer(f"⛔ {message.from_user.full_name} BAN qilindi")
             return
 
-import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
+from aiogram import Bot, Dispatcher, executor, types
 
 BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
 
-async def main():
-    bot = Bot(token=BOT_TOKEN)
-    dp = Dispatcher()
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
 
-    @dp.message(Command("start"))
-    async def start_handler(message: types.Message):
-        await message.answer("Salom! Bot ishlayapti ✅")
+@dp.message_handler(commands=['start'])
+async def start_cmd(message: types.Message):
+    await message.reply("✅ Bot ishlayapti!")
 
-    @dp.message(Command("test"))
-    async def test_handler(message: types.Message):
-        await message.answer("Test komandasi ishladi ✅")
-
-    await dp.start_polling(bot)
+@dp.message_handler()
+async def all_messages(message: types.Message):
+    await message.reply("📩 Xabar qabul qilindi")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)
+
 
 
 
