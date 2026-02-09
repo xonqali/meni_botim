@@ -114,6 +114,15 @@ async def anti_ads(message: types.Message):
                 await message.answer(f"⛔ {message.from_user.full_name} BAN qilindi")
             return
 
+from aiogram import Bot, Dispatcher, types
+import asyncio
+
+BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
+
+# Bot va Dispatcher yaratish
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
+
 # ================== START ==================
 @dp.message_handler(commands=["start"])
 async def start_bot(message: types.Message):
@@ -123,19 +132,9 @@ async def start_bot(message: types.Message):
     )
 
 # ================== BOTNI ISHGA TUSHURISH ==================
-import asyncio
+async def main():
+    await dp.start_polling()
 
 if __name__ == "__main__":
-    from aiogram import Bot, Dispatcher
-
-    BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
-    bot = Bot(token=BOT_TOKEN)
-    dp = Dispatcher()
-
-    dp.message_handlers.register(start_bot)  # handler-ni ro'yxatga olish
-
-    async def main():
-        await dp.start_polling(bot)
-
     asyncio.run(main())
 
