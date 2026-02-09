@@ -123,5 +123,19 @@ async def start_bot(message: types.Message):
     )
 
 # ================== BOTNI ISHGA TUSHURISH ==================
+import asyncio
+
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+    from aiogram import Bot, Dispatcher
+
+    BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher()
+
+    dp.message_handlers.register(start_bot)  # handler-ni ro'yxatga olish
+
+    async def main():
+        await dp.start_polling(bot)
+
+    asyncio.run(main())
+
