@@ -51,7 +51,6 @@ async def admin_panel(message: types.Message):
         await message.reply("❌ Siz admin emassiz!")
         return
 
-    # Inline tugmalar bilan admin panel
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         InlineKeyboardButton(text="📋 So‘zlar", callback_data="panel_words"),
@@ -91,7 +90,7 @@ async def process_panel(callback_query: types.CallbackQuery):
             return
         user_id = callback_query.message.reply_to_message.from_user.id
         chat_id = callback_query.message.chat.id
-        duration = 3600 if cmd == "ban_1h" else 86400  # 1 soat yoki 1 kun
+        duration = 3600 if cmd == "ban_1h" else 86400
         await temp_ban(user_id, chat_id, duration)
         await callback_query.message.reply(f"⏳ {callback_query.message.reply_to_message.from_user.full_name} {duration//3600} soatga ban qilindi")
 
@@ -160,7 +159,6 @@ async def anti_ads(message: types.Message):
             WARNINGS[user_id] = WARNINGS.get(user_id, 0) + 1
             stats["warnings"] += 1
 
-            # Log yozish
             log_entry = f"[{datetime.now()}] ⚠️ {message.from_user.full_name} ({user_id}): {text[:50]}..."
             DELETED_LOG.append(log_entry)
             if len(DELETED_LOG) > MAX_LOG:
@@ -168,7 +166,6 @@ async def anti_ads(message: types.Message):
             with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(log_entry + "\n")
 
-            # Ogohlantirish / kick / ban
             if WARNINGS[user_id] == 1:
                 await message.answer(f"⚠️ {message.from_user.full_name}, reklama taqiqlangan!")
             elif WARNINGS[user_id] == 2:
@@ -189,25 +186,24 @@ async def temp_ban(user_id, chat_id, duration_seconds):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{datetime.now()}] ⛔ {user_id} - temporary ban {duration_seconds} sek\n")
 
-# ================== BOT FUNKSIYALARINI KO'RSATUVCHI MENU ==================
+# ================== BOT FUNKSIYALAR MENUSI ==================
 @dp.message_handler(commands=['menu'])
 async def show_menu(message: types.Message):
-    # Foydalanuvchi uchun menu
+    bot_info = await bot.get_me()
+    bot_username = bot_info.username
+
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         InlineKeyboardButton(text="Bot Funksiyalari ℹ️", callback_data="func_info"),
         InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
         InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
-        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
+        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{bot_username}?startgroup=true")
     )
     await message.reply("🤖 Bot Menusi (funksiyalarni ko‘rish uchun tugmani bosing):", reply_markup=keyboard)
 
-# ================== CALLBACK HANDLER ==================
 @dp.callback_query_handler(lambda c: c.data)
 async def handle_menu(callback_query: types.CallbackQuery):
     cmd = callback_query.data
-
-    # Foydalanuvchi "Funksiyalar" tugmasini bosganida
     if cmd == "func_info":
         text = (
             "🤖 Bot funksiyalari:\n\n"
@@ -225,3 +221,4 @@ async def handle_menu(callback_query: types.CallbackQuery):
 # ================== BOT START ==================
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+
