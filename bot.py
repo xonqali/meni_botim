@@ -4,8 +4,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ChatType
 
 # ================== SOZLAMALAR ==================
-BOT_TOKEN = os.getenv("8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o")
-CREATOR_ID = int(os.getenv("5800819077"))
+BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
+CREATOR_ID = 5800819077
 
 logging.basicConfig(level=logging.INFO)
 
