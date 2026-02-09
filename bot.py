@@ -45,7 +45,6 @@ async def admin_panel(message: types.Message):
         await message.reply("❌ Siz admin emassiz!")
         return
 
-    # Asosiy admin tugmalar
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         InlineKeyboardButton(text="📋 So‘zlar", callback_data="panel_words"),
@@ -58,15 +57,6 @@ async def admin_panel(message: types.Message):
         InlineKeyboardButton(text="⏳ 1d Ban", callback_data="ban_1d")
     )
     await message.reply("🛠 ADMIN PANEL (Reply qilingan userga tugma orqali ban berish mumkin)", reply_markup=keyboard)
-
-    # Qo‘shimcha tugmalar (Yaratuvchisi, Kanal, Guruhga qo‘shish)
-    extra_buttons = InlineKeyboardMarkup(row_width=1)
-    extra_buttons.add(
-        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
-        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
-        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
-    )
-    await message.reply("ℹ️ Qo‘shimcha tugmalar (faqat adminlar ko‘radi):", reply_markup=extra_buttons)
 
 # ================== CALLBACK QUERY ==================
 @dp.callback_query_handler(lambda c: c.data)
