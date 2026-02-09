@@ -115,22 +115,42 @@ async def anti_ads(message: types.Message):
             return
 
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.types import ChatType
 
 BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
+BAD_WORDS = [
+    "http", "https", "t.me", "@", "instagram", "reklama", "promo"
+]
+
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message):
-    await message.reply("✅ Bot ishlayapti!")
+    await message.reply("✅ Antireklama bot ishga tushdi")
 
-@dp.message_handler()
-async def all_messages(message: types.Message):
-    await message.reply("📩 Xabar qabul qilindi")
+@dp.message_handler(content_types=types.ContentTypes.TEXT)
+async def anti_ads(message: types.Message):
+    if message.chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
+        return
+
+    text = message.text.lower()
+
+    for word in BAD_WORDS:
+        if word in text:
+            try:
+                await message.delete()
+                await message.answer(
+                    f"⚠️ {message.from_user.full_name}, reklama taqiqlangan!"
+                )
+            except:
+                pass
+            return
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+
 
 
 
