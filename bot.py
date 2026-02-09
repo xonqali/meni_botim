@@ -62,38 +62,6 @@ async def admin_panel(message: types.Message):
     )
     await message.reply("🛠 ADMIN PANEL", reply_markup=keyboard)
 
-# ================== CALLBACK QUERY HANDLER ==================
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('panel_'))
-async def process_panel(callback_query: types.CallbackQuery):
-    cmd = callback_query.data
-
-    if cmd == "panel_words":
-        await callback_query.message.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
-    elif cmd == "panel_reset":
-        await callback_query.message.reply("❗ Ogohlantirishlarni tozalash uchun user xabariga reply qilib /resetwarn yozing")
-    elif cmd == "panel_stats":
-        await callback_query.message.reply(
-            f"📊 Bugungi statistika:\n"
-            f"Ogohlantirishlar: {stats['warnings']}\n"
-            f"Kicks: {stats['kicks']}\n"
-            f"Bans: {stats['bans']}"
-        )
-    elif cmd == "panel_log":
-        if not DELETED_LOG:
-            await callback_query.message.reply("🔹 Hozircha o‘chirgan xabarlar yo‘q.")
-        else:
-            log_text = "\n\n".join(DELETED_LOG[-MAX_LOG:])
-            await callback_query.message.reply(f"📝 Oxirgi o‘chirgan xabarlar:\n{log_text}")
-    elif cmd.startswith("ban_"):
-        if not callback_query.message.reply_to_message:
-            await callback_query.message.reply("❗ Ban berish uchun user xabariga reply qilishingiz kerak")
-            return
-        user_id = callback_query.message.reply_to_message.from_user.id
-        chat_id = callback_query.message.chat.id
-        duration = 3600 if cmd == "ban_1h" else 86400
-        await temp_ban(user_id, chat_id, duration)
-        await callback_query.message.reply(f"⏳ {callback_query.message.reply_to_message.from_user.full_name} {duration//3600} soatga ban qilindi")
-
 # ================== SO'Z QO'SHISH ==================
 @dp.message_handler(commands=['addword'])
 async def add_word(message: types.Message):
@@ -159,6 +127,7 @@ async def anti_ads(message: types.Message):
             WARNINGS[user_id] = WARNINGS.get(user_id, 0) + 1
             stats["warnings"] += 1
 
+            # Log yozish
             log_entry = f"[{datetime.now()}] ⚠️ {message.from_user.full_name} ({user_id}): {text[:50]}..."
             DELETED_LOG.append(log_entry)
             if len(DELETED_LOG) > MAX_LOG:
@@ -166,6 +135,7 @@ async def anti_ads(message: types.Message):
             with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(log_entry + "\n")
 
+            # Ogohlantirish / kick / ban
             if WARNINGS[user_id] == 1:
                 await message.answer(f"⚠️ {message.from_user.full_name}, reklama taqiqlangan!")
             elif WARNINGS[user_id] == 2:
@@ -186,10 +156,19 @@ async def temp_ban(user_id, chat_id, duration_seconds):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{datetime.now()}] ⛔ {user_id} - temporary ban {duration_seconds} sek\n")
 
+# ================== MENU ==================
+@dp.message_handler(commands=['menu'])
+async def show_menu(message: types.Message):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton(text="Bot Funksiyalari ℹ️", callback_data="func_info")
+    )
+    await message.reply("📌 Bot menyusi:", reply_markup=keyboard)
+
 # ================== CALLBACK QUERY HANDLER ==================
 @dp.callback_query_handler(lambda c: c.data)
 async def handle_callbacks(callback_query: types.CallbackQuery):
-    await callback_query.answer()  # Telegram loading tugmasini olib tashlaydi
+    await callback_query.answer()  # loading tugmasini olib tashlaydi
 
     data = callback_query.data
 
