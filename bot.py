@@ -114,45 +114,27 @@ async def anti_ads(message: types.Message):
                 await message.answer(f"⛔ {message.from_user.full_name} BAN qilindi")
             return
 
+import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-import asyncio
 
 BOT_TOKEN = "8515560975:AAGmRUvORz3gIj39V0HUsAwPdgCYQshlK7o"
 
-# Bot va Dispatcher yaratish
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-
-# ================== HANDLERLAR ==================
-
-@dp.message(Command(commands=["start"]))
-async def start_bot(message: types.Message):
-    await message.answer(
-        "Salom! Men reklama xabarlarini avtomatik o‘chiruvchi botman.\n"
-        "Admin panel: /addword, /delword, /listwords, /log"
-    )
-
-@dp.message(Command(commands=["addword"]))
-async def add_word(message: types.Message):
-    await message.answer("Siz /addword komandasini ishga tushirdingiz.")
-
-@dp.message(Command(commands=["delword"]))
-async def del_word(message: types.Message):
-    await message.answer("Siz /delword komandasini ishga tushirdingiz.")
-
-@dp.message(Command(commands=["listwords"]))
-async def list_words(message: types.Message):
-    await message.answer("Siz /listwords komandasini ishga tushirdingiz.")
-
-@dp.message(Command(commands=["log"]))
-async def log(message: types.Message):
-    await message.answer("Siz /log komandasini ishga tushirdingiz.")
-
-# ================== BOTNI ISHGA TUSHURISH ==================
 async def main():
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher()
+
+    @dp.message(Command("start"))
+    async def start_handler(message: types.Message):
+        await message.answer("Salom! Bot ishlayapti ✅")
+
+    @dp.message(Command("test"))
+    async def test_handler(message: types.Message):
+        await message.answer("Test komandasi ishladi ✅")
+
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
