@@ -201,22 +201,22 @@ async def show_menu(message: types.Message):
     )
     await message.reply("🤖 Bot Menusi (funksiyalarni ko‘rish uchun tugmani bosing):", reply_markup=keyboard)
 
-@dp.callback_query_handler(lambda c: c.data)
+@dp.callback_query_handler(lambda c: c.data in ["func_info"])
 async def handle_menu(callback_query: types.CallbackQuery):
-    cmd = callback_query.data
-    if cmd == "func_info":
-        text = (
-            "🤖 Bot funksiyalari:\n\n"
-            "1️⃣ Antireklama - t.me, Instagram, Promo linklar taqiqlanadi\n"
-            "2️⃣ Ogohlantirishlar - foydalanuvchi birinchi xabarida ogohlantiriladi\n"
-            "3️⃣ Kick - foydalanuvchi 2-marta ogohlantirilsa kick qilinadi\n"
-            "4️⃣ Ban - foydalanuvchi 3-marta ogohlantirilsa ban qilinadi\n"
-            "5️⃣ Admin Panel - /panel yozib adminlar tugmalar orqali userga ban berishi mumkin\n"
-            "6️⃣ So‘z qo‘shish / o‘chirish - /addword /delword\n"
-            "7️⃣ Ogohlantirishlarni reset qilish - /resetwarn\n"
-            "8️⃣ /menu - bu menyuni yana ko‘rsatadi\n"
-        )
-        await callback_query.message.reply(text)
+    await callback_query.answer()  # loading tugmani olib tashlaydi
+    text = (
+        "🤖 Bot funksiyalari:\n\n"
+        "1️⃣ Antireklama - t.me, Instagram, Promo linklar taqiqlanadi\n"
+        "2️⃣ Ogohlantirishlar - foydalanuvchi birinchi xabarida ogohlantiriladi\n"
+        "3️⃣ Kick - foydalanuvchi 2-marta ogohlantirilsa kick qilinadi\n"
+        "4️⃣ Ban - foydalanuvchi 3-marta ogohlantirilsa ban qilinadi\n"
+        "5️⃣ Admin Panel - /panel yozib adminlar tugmalar orqali userga ban berishi mumkin\n"
+        "6️⃣ So‘z qo‘shish / o‘chirish - /addword /delword\n"
+        "7️⃣ Ogohlantirishlarni reset qilish - /resetwarn\n"
+        "8️⃣ /menu - bu menyuni yana ko‘rsatadi\n"
+    )
+    await callback_query.message.reply(text)
+
 
 # ================== BOT START ==================
 if __name__ == "__main__":
