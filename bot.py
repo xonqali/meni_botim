@@ -189,6 +189,39 @@ async def temp_ban(user_id, chat_id, duration_seconds):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{datetime.now()}] ⛔ {user_id} - temporary ban {duration_seconds} sek\n")
 
+# ================== BOT FUNKSIYALARINI KO'RSATUVCHI MENU ==================
+@dp.message_handler(commands=['menu'])
+async def show_menu(message: types.Message):
+    # Foydalanuvchi uchun menu
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton(text="Bot Funksiyalari ℹ️", callback_data="func_info"),
+        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
+        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
+        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
+    )
+    await message.reply("🤖 Bot Menusi (funksiyalarni ko‘rish uchun tugmani bosing):", reply_markup=keyboard)
+
+# ================== CALLBACK HANDLER ==================
+@dp.callback_query_handler(lambda c: c.data)
+async def handle_menu(callback_query: types.CallbackQuery):
+    cmd = callback_query.data
+
+    # Foydalanuvchi "Funksiyalar" tugmasini bosganida
+    if cmd == "func_info":
+        text = (
+            "🤖 Bot funksiyalari:\n\n"
+            "1️⃣ Antireklama - t.me, Instagram, Promo linklar taqiqlanadi\n"
+            "2️⃣ Ogohlantirishlar - foydalanuvchi birinchi xabarida ogohlantiriladi\n"
+            "3️⃣ Kick - foydalanuvchi 2-marta ogohlantirilsa kick qilinadi\n"
+            "4️⃣ Ban - foydalanuvchi 3-marta ogohlantirilsa ban qilinadi\n"
+            "5️⃣ Admin Panel - /panel yozib adminlar tugmalar orqali userga ban berishi mumkin\n"
+            "6️⃣ So‘z qo‘shish / o‘chirish - /addword /delword\n"
+            "7️⃣ Ogohlantirishlarni reset qilish - /resetwarn\n"
+            "8️⃣ /menu - bu menyuni yana ko‘rsatadi\n"
+        )
+        await callback_query.message.reply(text)
+
 # ================== BOT START ==================
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
