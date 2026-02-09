@@ -186,37 +186,57 @@ async def temp_ban(user_id, chat_id, duration_seconds):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{datetime.now()}] ⛔ {user_id} - temporary ban {duration_seconds} sek\n")
 
-# ================== BOT FUNKSIYALAR MENUSI ==================
-@dp.message_handler(commands=['menu'])
-async def show_menu(message: types.Message):
-    bot_info = await bot.get_me()
-    bot_username = bot_info.username
+# ================== CALLBACK QUERY HANDLER ==================
+@dp.callback_query_handler(lambda c: c.data)
+async def handle_callbacks(callback_query: types.CallbackQuery):
+    await callback_query.answer()  # Telegram loading tugmasini olib tashlaydi
 
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(
-        InlineKeyboardButton(text="Bot Funksiyalari ℹ️", callback_data="func_info"),
-        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
-        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
-        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{bot_username}?startgroup=true")
-    )
-    await message.reply("🤖 Bot Menusi (funksiyalarni ko‘rish uchun tugmani bosing):", reply_markup=keyboard)
+    data = callback_query.data
 
-@dp.callback_query_handler(lambda c: c.data in ["func_info"])
-async def handle_menu(callback_query: types.CallbackQuery):
-    await callback_query.answer()  # loading tugmani olib tashlaydi
-    text = (
-        "🤖 Bot funksiyalari:\n\n"
-        "1️⃣ Antireklama - t.me, Instagram, Promo linklar taqiqlanadi\n"
-        "2️⃣ Ogohlantirishlar - foydalanuvchi birinchi xabarida ogohlantiriladi\n"
-        "3️⃣ Kick - foydalanuvchi 2-marta ogohlantirilsa kick qilinadi\n"
-        "4️⃣ Ban - foydalanuvchi 3-marta ogohlantirilsa ban qilinadi\n"
-        "5️⃣ Admin Panel - /panel yozib adminlar tugmalar orqali userga ban berishi mumkin\n"
-        "6️⃣ So‘z qo‘shish / o‘chirish - /addword /delword\n"
-        "7️⃣ Ogohlantirishlarni reset qilish - /resetwarn\n"
-        "8️⃣ /menu - bu menyuni yana ko‘rsatadi\n"
-    )
-    await callback_query.message.reply(text)
+    # ====== PANEL CALLBACKS ======
+    if data.startswith("panel_"):
+        cmd = data
+        if cmd == "panel_words":
+            await callback_query.message.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
+        elif cmd == "panel_reset":
+            await callback_query.message.reply("❗ Ogohlantirishlarni tozalash uchun user xabariga reply qilib /resetwarn yozing")
+        elif cmd == "panel_stats":
+            await callback_query.message.reply(
+                f"📊 Bugungi statistika:\n"
+                f"Ogohlantirishlar: {stats['warnings']}\n"
+                f"Kicks: {stats['kicks']}\n"
+                f"Bans: {stats['bans']}"
+            )
+        elif cmd == "panel_log":
+            if not DELETED_LOG:
+                await callback_query.message.reply("🔹 Hozircha o‘chirgan xabarlar yo‘q.")
+            else:
+                log_text = "\n\n".join(DELETED_LOG[-MAX_LOG:])
+                await callback_query.message.reply(f"📝 Oxirgi o‘chirgan xabarlar:\n{log_text}")
+        elif cmd.startswith("ban_"):
+            if not callback_query.message.reply_to_message:
+                await callback_query.message.reply("❗ Ban berish uchun user xabariga reply qilishingiz kerak")
+                return
+            user_id = callback_query.message.reply_to_message.from_user.id
+            chat_id = callback_query.message.chat.id
+            duration = 3600 if cmd == "ban_1h" else 86400
+            await temp_ban(user_id, chat_id, duration)
+            await callback_query.message.reply(f"⏳ {callback_query.message.reply_to_message.from_user.full_name} {duration//3600} soatga ban qilindi")
 
+    # ====== MENU CALLBACK ======
+    elif data == "func_info":
+        text = (
+            "🤖 Bot funksiyalari:\n\n"
+            "1️⃣ Antireklama - t.me, Instagram, Promo linklar taqiqlanadi\n"
+            "2️⃣ Ogohlantirishlar - foydalanuvchi birinchi xabarida ogohlantiriladi\n"
+            "3️⃣ Kick - foydalanuvchi 2-marta ogohlantirilsa kick qilinadi\n"
+            "4️⃣ Ban - foydalanuvchi 3-marta ogohlantirilsa ban qilinadi\n"
+            "5️⃣ Admin Panel - /panel yozib adminlar tugmalar orqali userga ban berishi mumkin\n"
+            "6️⃣ So‘z qo‘shish / o‘chirish - /addword /delword\n"
+            "7️⃣ Ogohlantirishlarni reset qilish - /resetwarn\n"
+            "8️⃣ /menu - bu menyuni yana ko‘rsatadi\n"
+        )
+        await callback_query.message.reply(text)
 
 # ================== BOT START ==================
 if __name__ == "__main__":
