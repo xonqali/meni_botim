@@ -126,30 +126,119 @@ BAD_WORDS = [
     "http", "https", "t.me", "@", "instagram", "reklama", "promo"
 ]
 
+WARNINGS = {}  # user_id : count
+
+# ================= ADMIN TEKSHIRISH =================
+async def is_admin(message: types.Message):
+    member = await message.chat.get_member(message.from_user.id)
+    return member.is_chat_admin()
+
+# ================= START =================
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message):
     await message.reply("✅ Antireklama bot ishga tushdi")
 
+# ================= ADMIN PANEL =================
+@dp.message_handler(commands=['panel'])
+async def admin_panel(message: types.Message):
+    if not await is_admin(message):
+        return
+
+    await message.reply(
+        "🛠 ADMIN PANEL\n\n"
+        "/addword so‘z — reklama so‘zi qo‘shish\n"
+        "/delword so‘z — so‘zni o‘chirish\n"
+        "/listwords — barcha so‘zlar\n"
+        "/resetwarn @user — ogohlantirishni tozalash"
+    )
+
+# ================= SO‘Z QO‘SHISH =================
+@dp.message_handler(commands=['addword'])
+async def add_word(message: types.Message):
+    if not await is_admin(message):
+        return
+
+    word = message.get_args().lower()
+    if not word:
+        await message.reply("❗ Misol: /addword reklama")
+        return
+
+    if word not in BAD_WORDS:
+        BAD_WORDS.append(word)
+        await message.reply(f"✅ `{word}` qo‘shildi", parse_mode="Markdown")
+
+# ================= SO‘Z O‘CHIRISH =================
+@dp.message_handler(commands=['delword'])
+async def del_word(message: types.Message):
+    if not await is_admin(message):
+        return
+
+    word = message.get_args().lower()
+    if word in BAD_WORDS:
+        BAD_WORDS.remove(word)
+        await message.reply(f"❌ `{word}` o‘chirildi", parse_mode="Markdown")
+
+# ================= SO‘ZLAR RO‘YXATI =================
+@dp.message_handler(commands=['listwords'])
+async def list_words(message: types.Message):
+    if not await is_admin(message):
+        return
+
+    await message.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
+
+# ================= WARN RESET =================
+@dp.message_handler(commands=['resetwarn'])
+async def reset_warn(message: types.Message):
+    if not await is_admin(message):
+        return
+
+    if not message.reply_to_message:
+        await message.reply("❗ User xabariga reply qilib yoz")
+        return
+
+    user_id = message.reply_to_message.from_user.id
+    WARNINGS[user_id] = 0
+    await message.reply("♻️ Ogohlantirishlar tozalandi")
+
+# ================= ANTIREKLAMA =================
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def anti_ads(message: types.Message):
     if message.chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
+        return
+
+    if await is_admin(message):
         return
 
     text = message.text.lower()
 
     for word in BAD_WORDS:
         if word in text:
-            try:
-                await message.delete()
+            await message.delete()
+
+            user_id = message.from_user.id
+            WARNINGS[user_id] = WARNINGS.get(user_id, 0) + 1
+
+            if WARNINGS[user_id] == 1:
                 await message.answer(
-                    f"⚠️ {message.from_user.full_name}, reklama taqiqlangan!"
+                    f"⚠️ {message.from_user.full_name}\nReklama taqiqlangan!"
                 )
-            except:
-                pass
+            elif WARNINGS[user_id] == 2:
+                await message.chat.kick(user_id)
+                await message.chat.unban(user_id)
+                await message.answer(
+                    f"👢 {message.from_user.full_name} kick qilindi"
+                )
+            else:
+                await message.chat.kick(user_id)
+                await message.answer(
+                    f"⛔ {message.from_user.full_name} BAN qilindi"
+                )
             return
 
+# ================= BOT START =================
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+
 
 
 
