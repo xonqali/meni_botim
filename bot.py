@@ -33,10 +33,16 @@ async def is_admin(message: types.Message):
     member = await message.chat.get_member(message.from_user.id)
     return member.is_chat_admin
 
-# ================== START ==================
+# ================== START VA INLINE TUGMALAR ==================
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message):
-    await message.reply("✅ Antireklama bot ishga tushdi")
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
+        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
+        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
+    )
+    await message.reply("✅ Antireklama bot ishga tushdi", reply_markup=keyboard)
 
 # ================== ADMIN PANEL ==================
 @dp.message_handler(commands=['panel'])
@@ -45,36 +51,29 @@ async def admin_panel(message: types.Message):
         await message.reply("❌ Siz admin emassiz!")
         return
 
+    # Inline tugmalar bilan admin panel
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         InlineKeyboardButton(text="📋 So‘zlar", callback_data="panel_words"),
         InlineKeyboardButton(text="♻️ Reset Warnings", callback_data="panel_reset"),
         InlineKeyboardButton(text="📊 Stats", callback_data="panel_stats"),
         InlineKeyboardButton(text="📝 Log", callback_data="panel_log"),
-        InlineKeyboardButton(text="⏳ 30s Ban", callback_data="ban_30s"),
-        InlineKeyboardButton(text="⏳ 1m Ban", callback_data="ban_1m"),
-        InlineKeyboardButton(text="⏳ 1h Ban", callback_data="ban_1h"),
-        InlineKeyboardButton(text="⏳ 1d Ban", callback_data="ban_1d")
+        InlineKeyboardButton(text="⏳ 1 Soat Ban", callback_data="ban_1h"),
+        InlineKeyboardButton(text="⏳ 1 Kun Ban", callback_data="ban_1d")
     )
-    await message.reply("🛠 ADMIN PANEL (Reply qilingan userga tugma orqali ban berish mumkin)", reply_markup=keyboard)
+    await message.reply("🛠 ADMIN PANEL", reply_markup=keyboard)
 
-# ================== CALLBACK QUERY ==================
-@dp.callback_query_handler(lambda c: c.data)
-async def process_callback(callback_query: types.CallbackQuery):
+# ================== CALLBACK QUERY HANDLER ==================
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('panel_'))
+async def process_panel(callback_query: types.CallbackQuery):
     cmd = callback_query.data
-    msg = callback_query.message
 
-    if not await is_admin(msg):
-        await msg.reply("❌ Siz admin emassiz!")
-        return
-
-    # Panel tugmalari
     if cmd == "panel_words":
-        await msg.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
+        await callback_query.message.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
     elif cmd == "panel_reset":
-        await msg.reply("❗ Ogohlantirishlarni tozalash uchun user xabariga reply qilib /resetwarn yozing")
+        await callback_query.message.reply("❗ Ogohlantirishlarni tozalash uchun user xabariga reply qilib /resetwarn yozing")
     elif cmd == "panel_stats":
-        await msg.reply(
+        await callback_query.message.reply(
             f"📊 Bugungi statistika:\n"
             f"Ogohlantirishlar: {stats['warnings']}\n"
             f"Kicks: {stats['kicks']}\n"
@@ -82,30 +81,19 @@ async def process_callback(callback_query: types.CallbackQuery):
         )
     elif cmd == "panel_log":
         if not DELETED_LOG:
-            await msg.reply("🔹 Hozircha o‘chirgan xabarlar yo‘q.")
+            await callback_query.message.reply("🔹 Hozircha o‘chirgan xabarlar yo‘q.")
         else:
             log_text = "\n\n".join(DELETED_LOG[-MAX_LOG:])
-            await msg.reply(f"📝 Oxirgi o‘chirgan xabarlar:\n{log_text}")
+            await callback_query.message.reply(f"📝 Oxirgi o‘chirgan xabarlar:\n{log_text}")
     elif cmd.startswith("ban_"):
-        if not msg.reply_to_message:
-            await msg.reply("❗ Ban berish uchun user xabariga reply qilishingiz kerak")
+        if not callback_query.message.reply_to_message:
+            await callback_query.message.reply("❗ Ban berish uchun user xabariga reply qilishingiz kerak")
             return
-        user_id = msg.reply_to_message.from_user.id
-        chat_id = msg.chat.id
-
-        if cmd == "ban_30s":
-            duration = 30
-        elif cmd == "ban_1m":
-            duration = 60
-        elif cmd == "ban_1h":
-            duration = 3600
-        elif cmd == "ban_1d":
-            duration = 86400
-        else:
-            return
-
+        user_id = callback_query.message.reply_to_message.from_user.id
+        chat_id = callback_query.message.chat.id
+        duration = 3600 if cmd == "ban_1h" else 86400  # 1 soat yoki 1 kun
         await temp_ban(user_id, chat_id, duration)
-        await msg.reply(f"⏳ {msg.reply_to_message.from_user.full_name} {duration} sekundga ban qilindi")
+        await callback_query.message.reply(f"⏳ {callback_query.message.reply_to_message.from_user.full_name} {duration//3600} soatga ban qilindi")
 
 # ================== SO'Z QO'SHISH ==================
 @dp.message_handler(commands=['addword'])
