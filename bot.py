@@ -33,16 +33,10 @@ async def is_admin(message: types.Message):
     member = await message.chat.get_member(message.from_user.id)
     return member.is_chat_admin
 
-# ================== START VA INLINE TUGMALAR ==================
+# ================== START ==================
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message):
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(
-        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
-        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
-        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
-    )
-    await message.reply("✅ Antireklama bot ishga tushdi", reply_markup=keyboard)
+    await message.reply("✅ Antireklama bot ishga tushdi")
 
 # ================== ADMIN PANEL ==================
 @dp.message_handler(commands=['panel'])
@@ -50,15 +44,78 @@ async def admin_panel(message: types.Message):
     if not await is_admin(message):
         await message.reply("❌ Siz admin emassiz!")
         return
-    await message.reply(
-        "🛠 ADMIN PANEL\n\n"
-        "/addword so‘z — reklama so‘zi qo‘shish\n"
-        "/delword so‘z — so‘zni o‘chirish\n"
-        "/listwords — barcha so‘zlar\n"
-        "/resetwarn @user — ogohlantirishni tozalash\n"
-        "/stats — bugungi statistika\n"
-        "/log — oxirgi o‘chirgan xabarlar"
+
+    # Asosiy admin tugmalar
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton(text="📋 So‘zlar", callback_data="panel_words"),
+        InlineKeyboardButton(text="♻️ Reset Warnings", callback_data="panel_reset"),
+        InlineKeyboardButton(text="📊 Stats", callback_data="panel_stats"),
+        InlineKeyboardButton(text="📝 Log", callback_data="panel_log"),
+        InlineKeyboardButton(text="⏳ 30s Ban", callback_data="ban_30s"),
+        InlineKeyboardButton(text="⏳ 1m Ban", callback_data="ban_1m"),
+        InlineKeyboardButton(text="⏳ 1h Ban", callback_data="ban_1h"),
+        InlineKeyboardButton(text="⏳ 1d Ban", callback_data="ban_1d")
     )
+    await message.reply("🛠 ADMIN PANEL (Reply qilingan userga tugma orqali ban berish mumkin)", reply_markup=keyboard)
+
+    # Qo‘shimcha tugmalar (Yaratuvchisi, Kanal, Guruhga qo‘shish)
+    extra_buttons = InlineKeyboardMarkup(row_width=1)
+    extra_buttons.add(
+        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
+        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
+        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
+    )
+    await message.reply("ℹ️ Qo‘shimcha tugmalar (faqat adminlar ko‘radi):", reply_markup=extra_buttons)
+
+# ================== CALLBACK QUERY ==================
+@dp.callback_query_handler(lambda c: c.data)
+async def process_callback(callback_query: types.CallbackQuery):
+    cmd = callback_query.data
+    msg = callback_query.message
+
+    if not await is_admin(msg):
+        await msg.reply("❌ Siz admin emassiz!")
+        return
+
+    # Panel tugmalari
+    if cmd == "panel_words":
+        await msg.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
+    elif cmd == "panel_reset":
+        await msg.reply("❗ Ogohlantirishlarni tozalash uchun user xabariga reply qilib /resetwarn yozing")
+    elif cmd == "panel_stats":
+        await msg.reply(
+            f"📊 Bugungi statistika:\n"
+            f"Ogohlantirishlar: {stats['warnings']}\n"
+            f"Kicks: {stats['kicks']}\n"
+            f"Bans: {stats['bans']}"
+        )
+    elif cmd == "panel_log":
+        if not DELETED_LOG:
+            await msg.reply("🔹 Hozircha o‘chirgan xabarlar yo‘q.")
+        else:
+            log_text = "\n\n".join(DELETED_LOG[-MAX_LOG:])
+            await msg.reply(f"📝 Oxirgi o‘chirgan xabarlar:\n{log_text}")
+    elif cmd.startswith("ban_"):
+        if not msg.reply_to_message:
+            await msg.reply("❗ Ban berish uchun user xabariga reply qilishingiz kerak")
+            return
+        user_id = msg.reply_to_message.from_user.id
+        chat_id = msg.chat.id
+
+        if cmd == "ban_30s":
+            duration = 30
+        elif cmd == "ban_1m":
+            duration = 60
+        elif cmd == "ban_1h":
+            duration = 3600
+        elif cmd == "ban_1d":
+            duration = 86400
+        else:
+            return
+
+        await temp_ban(user_id, chat_id, duration)
+        await msg.reply(f"⏳ {msg.reply_to_message.from_user.full_name} {duration} sekundga ban qilindi")
 
 # ================== SO'Z QO'SHISH ==================
 @dp.message_handler(commands=['addword'])
@@ -87,14 +144,6 @@ async def del_word(message: types.Message):
     else:
         await message.reply("⚠️ Bunday so‘z yo‘q")
 
-# ================== SO'ZLAR RO'YXATI ==================
-@dp.message_handler(commands=['listwords'])
-async def list_words(message: types.Message):
-    if not await is_admin(message):
-        await message.reply("❌ Siz admin emassiz!")
-        return
-    await message.reply("📋 So‘zlar:\n" + "\n".join(BAD_WORDS))
-
 # ================== WARN RESET ==================
 @dp.message_handler(commands=['resetwarn'])
 async def reset_warn(message: types.Message):
@@ -107,28 +156,6 @@ async def reset_warn(message: types.Message):
     user_id = message.reply_to_message.from_user.id
     WARNINGS[user_id] = 0
     await message.reply("♻️ Ogohlantirishlar tozalandi")
-
-# ================== STATISTIKA ==================
-@dp.message_handler(commands=['stats'])
-async def show_stats(message: types.Message):
-    await message.reply(
-        f"📊 Bugungi statistika:\n"
-        f"Ogohlantirishlar: {stats['warnings']}\n"
-        f"Kicks: {stats['kicks']}\n"
-        f"Bans: {stats['bans']}"
-    )
-
-# ================== LOG ==================
-@dp.message_handler(commands=['log'])
-async def show_log(message: types.Message):
-    if not await is_admin(message):
-        await message.reply("❌ Siz admin emassiz!")
-        return
-    if not DELETED_LOG:
-        await message.reply("🔹 Hozircha o‘chirgan xabarlar yo‘q.")
-        return
-    log_text = "\n\n".join(DELETED_LOG[-MAX_LOG:])
-    await message.reply(f"📝 Oxirgi o‘chirgan xabarlar:\n{log_text}")
 
 # ================== ANTIREKLAMA ==================
 @dp.message_handler(content_types=types.ContentTypes.ANY)
@@ -187,10 +214,3 @@ async def temp_ban(user_id, chat_id, duration_seconds):
 # ================== BOT START ==================
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
-
-
-
-
-
-
-
