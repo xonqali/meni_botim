@@ -156,30 +156,15 @@ async def temp_ban(user_id, chat_id, duration_seconds):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{datetime.now()}] ⛔ {user_id} - temporary ban {duration_seconds} sek\n")
 
-@dp.message_handler(commands=['start', 'menu'])
-async def start_menu(message: types.Message):
+@dp.message_handler(commands=['menu'])
+async def menu_cmd(message: types.Message):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
-        InlineKeyboardButton(text="Bot Funksiyalari ℹ️", callback_data="func_info"),
-        InlineKeyboardButton(text="Admin Panel 🛠", callback_data="open_panel")
+        InlineKeyboardButton(text="Yaratuvchisi 👤", url="https://t.me/xozyayn2"),
+        InlineKeyboardButton(text="Shaxsiy Kanal 📢", url="https://t.me/+8ytWcdHjmmIyNDZi"),
+        InlineKeyboardButton(text="Botni Guruhga Qo'shish ➕", url=f"https://t.me/{(await bot.get_me()).username}?startgroup=true")
     )
-    await message.reply("📌 Bot menyusi:", reply_markup=keyboard)
-
-# CALLBACKS
-@dp.callback_query_handler(lambda c: c.data)
-async def handle_callbacks(callback_query: types.CallbackQuery):
-    await callback_query.answer()
-    data = callback_query.data
-
-    if data == "func_info":
-        await callback_query.message.reply(
-            "🤖 Bot funksiyalari:\n1️⃣ Antireklama\n2️⃣ Ogohlantirish\n3️⃣ Kick\n4️⃣ Ban\n5️⃣ Admin Panel\n6️⃣ /addword /delword\n7️⃣ /resetwarn\n8️⃣ /menu"
-        )
-    elif data == "open_panel":
-        if not await is_admin(callback_query.message):
-            await callback_query.message.reply("❌ Siz admin emassiz!")
-            return
-        await admin_panel(callback_query.message)
+    await message.reply("📋 Bot menyusiga xush kelibsiz", reply_markup=keyboard)
 
 # ================== BOT START ==================
 if __name__ == "__main__":
