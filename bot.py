@@ -103,6 +103,8 @@ async def reset_warn(message: types.Message):
     await message.reply("♻️ Ogohlantirishlar tozalandi")
 
 # ================== ANTIREKLAMA ==================
+    if message.text and message.text.startswith('/'):
+        return
 @dp.message_handler(content_types=types.ContentTypes.ANY)
 async def anti_ads(message: types.Message):
     if message.chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
