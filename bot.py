@@ -14,7 +14,7 @@ dp = Dispatcher(bot)
 
 # ================== REKLAMA SO‘ZLAR ==================
 BAD_WORDS = [
-    r"http", r"https", r"t\.me", r"@", r"instagram", r"reklama", r"promo"
+    r"http", r"https", r"t\.me", r"@", r"instagram", r"reklama", r".net", r".com", r".uz", r".ru",
 ]
 
 # ================== ADMIN TEKSHIRISH ==================
